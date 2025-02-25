@@ -3,39 +3,51 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
+// Interfaz para la pila
+interface StackADT<T> {
+    void push(T item);
+    T pop();
+    T peek();
+    boolean isEmpty();
+    int size();
+}
+
+// Clase abstracta para la pila
+abstract class AbstractStack<T> implements StackADT<T> {
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+}
+
 // Implementación con Vector
-class VectorStack<T> implements StackADT<T> {
-    private Vector<T> stack;    
+class VectorStack<T> extends AbstractStack<T> {
+    private Vector<T> stack;
 
     public VectorStack() {
-        stack = new Vector<>(); // vector para almacenar datos 
-    }  
+        stack = new Vector<>();
+    }
 
     public void push(T item) {
-        stack.add(item); // al final agrega elemento 
+        stack.add(item);
     }
 
     public T pop() {
         if (isEmpty()) throw new IllegalStateException("La pila está vacía.");
-        return stack.remove(stack.size() - 1); // elimina y devuelve último elemento 
-    } 
+        return stack.remove(stack.size() - 1);
+    }
 
     public T peek() {
         if (isEmpty()) throw new IllegalStateException("La pila está vacía.");
-        return stack.lastElement(); // devúelve último elemento sin eliminarlo 
-    } 
-
-    public boolean isEmpty() {
-        return stack.isEmpty();
-    } // verifica si está vacía 
+        return stack.lastElement();
+    }
 
     public int size() {
         return stack.size();
-    } // retorna el tamaño 
+    }
 }
 
 // Implementación con ArrayList
-class ArrayListStack<T> implements StackADT<T> {
+class ArrayListStack<T> extends AbstractStack<T> {
     private ArrayList<T> stack;
 
     public ArrayListStack() {
@@ -56,21 +68,17 @@ class ArrayListStack<T> implements StackADT<T> {
         return stack.get(stack.size() - 1);
     }
 
-    public boolean isEmpty() {
-        return stack.isEmpty();
-    }
-
     public int size() {
         return stack.size();
     }
 }
 
-// Interfaz para la Calculadora Postfix
+// Interfaz para la calculadora postfix
 interface PostfixCalculatorADT {
     int evaluate(String expression);
 }
 
-// Implementación de la Calculadora Postfix
+// Implementación de la calculadora postfix
 class PostfixCalculator implements PostfixCalculatorADT {
     private StackADT<Integer> stack;
 
@@ -84,11 +92,11 @@ class PostfixCalculator implements PostfixCalculatorADT {
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
 
-            if (token.matches("\\d+")) { // Es un número
+            if (token.matches("\\d+")) {
                 stack.push(Integer.parseInt(token));
-            } else { // Es un operador
+            } else {
                 if (stack.size() < 2) throw new IllegalArgumentException("Expresión inválida: operandos insuficientes.");
-                
+
                 int operandB = stack.pop();
                 int operandA = stack.pop();
                 int result = 0;
@@ -104,11 +112,21 @@ class PostfixCalculator implements PostfixCalculatorADT {
                     case "%": result = operandA % operandB; break;
                     default: throw new IllegalArgumentException("Operador no válido: " + token);
                 }
-                stack.push(result); // guardamos resultado en la pila
+                stack.push(result);
             }
         }
         if (stack.size() != 1) throw new IllegalArgumentException("Expresión inválida: operandos sobrantes.");
-        return stack.pop(); // devolvemos resultado final 
+        return stack.pop();
+    }
+}
+
+// Clase Factory para crear pilas
+class StackFactory<T> {
+    public StackADT<T> getStack(String entry) {
+        if (entry.equalsIgnoreCase("AL"))
+            return new ArrayListStack<>();
+        else
+            return new VectorStack<>();
     }
 }
 
@@ -116,6 +134,7 @@ class PostfixCalculator implements PostfixCalculatorADT {
 public class Main1 {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        StackFactory<Integer> factory = new StackFactory<>();
         StackADT<Integer> stack;
 
         System.out.println("Seleccione la implementación de pila:");
@@ -126,9 +145,9 @@ public class Main1 {
         scanner.nextLine(); // Limpiar buffer
 
         if (option == 1) {
-            stack = new VectorStack<>();
+            stack = factory.getStack("V");
         } else {
-            stack = new ArrayListStack<>();
+            stack = factory.getStack("AL");
         }
 
         PostfixCalculator calculator = new PostfixCalculator(stack);
